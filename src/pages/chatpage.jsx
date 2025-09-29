@@ -18,6 +18,10 @@ export default function ChatPage() {
   useEffect(() => {
     saveConversations({ conversations, qa });
   }, [conversations]);
+  useEffect(() => {
+  console.log('Input field rendered');
+}, []);
+
 
   const addMessage = (from, text) => {
     const newMsg = { from, text, ts: new Date().toISOString() };
@@ -127,7 +131,7 @@ export default function ChatPage() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Message Bot AI…"
+            placeholder="Message Bot AI..."
           />
           <button type="submit">Ask</button>
         </form>
