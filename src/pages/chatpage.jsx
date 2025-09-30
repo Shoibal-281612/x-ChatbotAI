@@ -50,7 +50,7 @@ export default function ChatPage() {
 
     addMessage('user', question);
     const key = question.toLowerCase();
-    const answer = qa[key] || 'Sorry, I did not understand your query.';
+    const answer = qa[key] || 'Sorry, Did not understand your query.';
 
     setIsLoading(true); // Start loading state
 
@@ -123,7 +123,10 @@ export default function ChatPage() {
       />
       <div className="chat-area">
         <header className="chat-header">
-          <button onClick={createNewConversation}>New Chat</button>
+          <h1>Bot AI</h1>
+          <a href="#" onClick={(e) => { e.preventDefault(); createNewConversation(); }}>
+  New Chat
+</a>
           <h2>{activeConv?.title || 'Start a conversation'}</h2>
           <div>
             <button type="button" onClick={saveConversation}>
