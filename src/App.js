@@ -8,7 +8,7 @@ export default function App() {
   return (
     <div>
       <nav className="app-nav">
-        <Link to="/">Soul AI</Link>
+        <Link to="/">Bot AI</Link>
         <span className="nav-links">
           <Link to="/history">Past Conversions</Link>
           <Link to="/feedback">Feedback</Link>

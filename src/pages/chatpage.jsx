@@ -12,7 +12,7 @@ export default function ChatPage() {
   const [qa] = useState(stored.qa || {});
   const [activeConv, setActiveConv] = useState(conversations[0] || {
   id: 'default',
-  title: 'Default Conversation',
+  title: 'How Can I  Help You Today?',
   messages: [],
   feedback: { thumbsUp: false, thumbsDown: false, rating: 0, comment: '' },
 });
@@ -123,7 +123,7 @@ export default function ChatPage() {
       />
       <div className="chat-area">
         <div className="chat-header">
-          <button onClick={createNewConversation}>New</button>
+          <button onClick={createNewConversation}>Ask</button>
           <h2>{activeConv?.title || 'Start a conversation'}</h2>
           <div>
             <button type="button" onClick={saveConversation}>
