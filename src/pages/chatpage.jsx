@@ -6,22 +6,26 @@ import { ensureSeed, loadConversations, saveConversations } from '../utils/stora
 import stubs from '../data/stubs.json';
 
 export default function ChatPage() {
-  useEffect(() => { ensureSeed(stubs); }, []);
-
+  const [isLoading, setIsLoading] = useState(false); // State to track loading status
   const stored = loadConversations() || stubs;
   const [conversations, setConversations] = useState(stored.conversations);
   const [qa] = useState(stored.qa || {});
-  const [activeConv, setActiveConv] = useState(conversations[0] || null);
+  const [activeConv, setActiveConv] = useState(conversations[0] || {
+  id: 'default',
+  title: 'Default Conversation',
+  messages: [],
+  feedback: { thumbsUp: false, thumbsDown: false, rating: 0, comment: '' },
+});
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
+    ensureSeed(stubs);
+  }, []);
+
+  useEffect(() => {
     saveConversations({ conversations, qa });
   }, [conversations]);
-  useEffect(() => {
-  console.log('Input field rendered');
-}, []);
-
 
   const addMessage = (from, text) => {
     const newMsg = { from, text, ts: new Date().toISOString() };
@@ -42,11 +46,19 @@ export default function ChatPage() {
   const handleAsk = (e) => {
     e.preventDefault();
     const question = input.trim();
-    if (!question) return;
+    if (!question || isLoading) return; // Prevent input if already processing
+
     addMessage('user', question);
     const key = question.toLowerCase();
-    const answer = qa[key] || 'Sorry, Did not understand your query!';
-    setTimeout(() => addMessage('ai', answer), 300);
+    const answer = qa[key] || 'Sorry, I did not understand your query.';
+
+    setIsLoading(true); // Start loading state
+
+    setTimeout(() => {
+      addMessage('ai', answer);
+      setIsLoading(false); // End loading state
+    }, 300);
+
     setInput('');
   };
 
@@ -84,7 +96,6 @@ export default function ChatPage() {
   };
 
   const handleEndConversation = () => {
-    // Use our RatingStars UI instead of prompt
     const ratingStr = prompt('Please give a rating (1-5):');
     const rating = Math.min(5, Math.max(0, Number(ratingStr || 0)));
     const comment = prompt('Any subjective feedback (optional):') || '';
@@ -131,10 +142,12 @@ export default function ChatPage() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Message Bot AI..."
+            placeholder="Message Bot AI…"
+            disabled={isLoading} // Disable input when loading
           />
-          <button type="submit">Ask</button>
+          <button type="submit" disabled={isLoading}>Ask</button>
         </form>
+        {isLoading && <div className="typing-indicator">AI is typing...</div>}
       </div>
     </div>
   );
