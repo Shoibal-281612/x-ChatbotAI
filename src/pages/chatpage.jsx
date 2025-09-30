@@ -122,8 +122,8 @@ export default function ChatPage() {
         onSelect={onSelectConversation}
       />
       <div className="chat-area">
-        <div className="chat-header">
-          <button onClick={createNewConversation}>Ask</button>
+        <header className="chat-header">
+          <button onClick={createNewConversation}>New Chat</button>
           <h2>{activeConv?.title || 'Start a conversation'}</h2>
           <div>
             <button type="button" onClick={saveConversation}>
@@ -131,7 +131,7 @@ export default function ChatPage() {
             </button>
             <button onClick={handleEndConversation}>End & Rate</button>
           </div>
-        </div>
+        </header>
         <div className="chat-body">
           {(activeConv?.messages || []).map((m, i) => (
             <MessageBubble key={i} msg={m} onThumbs={handleThumbs} />
@@ -142,7 +142,7 @@ export default function ChatPage() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Message Bot AI…"
+            placeholder="Message Bot AI..."
             disabled={isLoading} // Disable input when loading
           />
           <button type="submit" disabled={isLoading}>Ask</button>

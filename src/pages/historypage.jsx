@@ -8,7 +8,7 @@ export default function HistoryPage() {
 
   return (
     <div className="page-wrapper">
-      <h1>Conversation History</h1>
+      <h1>Past Conversations</h1>
       {convos.map((c) => (
         <div key={c.id} className="history-item">
           <div className="meta">
