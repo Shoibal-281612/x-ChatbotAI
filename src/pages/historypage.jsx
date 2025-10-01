@@ -8,7 +8,8 @@ export default function HistoryPage() {
 
   return (
     <div className="page-wrapper">
-      <h1>Hi, how are you?</h1>
+      <h1>Past Conversations</h1>
+      <p>Hi, how are you?</p>
       {convos.map((c) => (
         <div key={c.id} className="history-item">
           <div className="meta">
