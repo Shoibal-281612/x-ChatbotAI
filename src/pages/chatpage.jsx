@@ -44,23 +44,28 @@ export default function ChatPage() {
   };
 
   const handleAsk = (e) => {
-    e.preventDefault();
-    const question = input.trim();
-    if (!question || isLoading) return; // Prevent input if already processing
+  e.preventDefault();
+  const question = input.trim();
+  if (!question || isLoading) return;
 
-    addMessage('user', question);
-    const key = question.toLowerCase();
-    const answer = qa[Object.keys(qa).find(k => k.toLowerCase() === key)] || 'Sorry, Did not understand your query!';
+  addMessage('user', question);
 
-    setIsLoading(true); // Start loading state
+  const found = Array.isArray(qa)
+    ? qa.find(
+        (q) => q.question.trim().toLowerCase() === question.trim().toLowerCase()
+      )
+    : null;
 
-    setTimeout(() => {
-      addMessage('ai', answer);
-      setIsLoading(false); // End loading state
-    }, 300);
+  const answer = found ? found.response : 'Sorry, Did not understand your query!';
 
-    setInput('');
-  };
+  setIsLoading(true);
+  setTimeout(() => {
+    addMessage('ai', answer);
+    setIsLoading(false);
+  }, 300);
+
+  setInput('');
+};
 
   const createNewConversation = () => {
     const newConv = {
@@ -124,10 +129,13 @@ export default function ChatPage() {
       <div className="chat-area">
         <header className="chat-header">
           <h1>Bot AI</h1>
-         <a
-  href="#"
-  data-testid="new-chat-btn"
-  onClick={(e) => { e.preventDefault(); createNewConversation(); }}
+       <a
+  href="/"
+  onClick={(e) => {
+    e.preventDefault();
+    createNewConversation();
+    setInput(""); // clear input
+  }}
 >
   New Chat
 </a>
