@@ -124,9 +124,9 @@ export default function ChatPage() {
       <div className="chat-area">
         <header className="chat-header">
           <h1>Bot AI</h1>
-          <button type="button" onClick={createNewConversation}>
+          <a href="#" onClick={(e) => { e.preventDefault(); createNewConversation(); }}>
   New Chat
-</button>
+</a>
           <h2>{activeConv?.title || 'Start a conversation'}</h2>
           <div>
             <button type="button" onClick={saveConversation}>
