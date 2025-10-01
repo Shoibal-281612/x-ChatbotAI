@@ -25,7 +25,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     saveConversations({ conversations, qa });
-  }, [conversations]);
+  }, [conversations, qa]);
 
   const addMessage = (from, text) => {
     const newMsg = { from, text, ts: new Date().toISOString() };
@@ -50,7 +50,7 @@ export default function ChatPage() {
 
     addMessage('user', question);
     const key = question.toLowerCase();
-    const answer = qa[key] || 'Sorry, Did not understand your query.';
+    const answer = qa[Object.keys(qa).find(k => k.toLowerCase() === key)] || 'Sorry, Did not understand your query!';
 
     setIsLoading(true); // Start loading state
 
@@ -124,9 +124,9 @@ export default function ChatPage() {
       <div className="chat-area">
         <header className="chat-header">
           <h1>Bot AI</h1>
-          <a href="#" onClick={(e) => { e.preventDefault(); createNewConversation(); }}>
+          <button type="button" onClick={createNewConversation}>
   New Chat
-</a>
+</button>
           <h2>{activeConv?.title || 'Start a conversation'}</h2>
           <div>
             <button type="button" onClick={saveConversation}>
