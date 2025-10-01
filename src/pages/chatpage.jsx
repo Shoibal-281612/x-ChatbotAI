@@ -1,61 +1,32 @@
-"use client";
-import { useState, useEffect, useRef } from "react";
-import { saveConversations, loadConversations } from "../utils/storage";
+import React, { useEffect, useState, useRef } from 'react';
+import ConversationList from '../components/conversationlist';
+import MessageBubble from '../components/messagebubble';
+import RatingStars from '../components/ratingstar';
+import { ensureSeed, loadConversations, saveConversations } from '../utils/storage';
+import stubs from '../data/stubs.json';
 
 export default function ChatPage() {
-  const [input, setInput] = useState("");
-  const [conversations, setConversations] = useState([]);
-  const [activeConv, setActiveConv] = useState(null);
-  const [qa, setQa] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const endRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false); // State to track loading status
+  const stored = loadConversations() || stubs;
+  const [conversations, setConversations] = useState(stored.conversations);
+  const [qa] = useState(stored.qa || {});
+  const [activeConv, setActiveConv] = useState(conversations[0] || {
+  id: 'default',
+  title: 'How Can I  Help You Today?',
+  messages: [],
+  feedback: { thumbsUp: false, thumbsDown: false, rating: 0, comment: '' },
+});
+  const [input, setInput] = useState('');
+  const messagesEndRef = useRef(null);
 
-  // Load conversations + QA
   useEffect(() => {
-    const saved = loadConversations();
-    if (saved) {
-      setConversations(saved.conversations || []);
-      setQa(saved.qa || {});
-    } else {
-      fetch("/stubs.json")
-        .then((res) => res.json())
-        .then((data) => {
-          setQa(data.qa || {});
-          saveConversations({ conversations: [], qa: data.qa || {} });
-        });
-    }
+    ensureSeed(stubs);
   }, []);
 
-  // Default active conversation
   useEffect(() => {
-    if (!activeConv) {
-      setActiveConv(
-        conversations[0] || {
-          id: "default",
-          title: "How Can I Help You Today?",
-          createdAt: new Date().toISOString(),
-          messages: [],
-          feedback: { thumbsUp: false, thumbsDown: false, rating: 0, comment: "" },
-        }
-      );
-    }
-  }, [conversations, activeConv]);
+    saveConversations({ conversations, qa });
+  }, [conversations, qa]);
 
-  // Scroll to bottom
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeConv?.messages]);
-
-  // --- fix lookup ---
-  const findAnswer = (q) => {
-    const lowerQ = q.toLowerCase();
-    const match = Object.keys(qa).find((k) =>
-      lowerQ.includes(k.toLowerCase())
-    );
-    return match ? qa[match] : "Sorry, Did not understand your query!";
-  };
-
-  // --- fix addMessage persistence ---
   const addMessage = (from, text) => {
     const newMsg = { from, text, ts: new Date().toISOString() };
     const updated = {
@@ -67,98 +38,120 @@ export default function ChatPage() {
     );
     setConversations(newConvs);
     setActiveConv(updated);
-    saveConversations({ conversations: newConvs, qa }); // persist
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
   };
 
   const handleAsk = (e) => {
     e.preventDefault();
     const question = input.trim();
-    if (!question || isLoading) return;
+    if (!question || isLoading) return; // Prevent input if already processing
 
-    addMessage("user", question);
-    const answer = findAnswer(question);
+    addMessage('user', question);
+    const key = question.toLowerCase();
+    const answer = qa[Object.keys(qa).find(k => k.toLowerCase() === key)] || 'Sorry, Did not understand your query!';
 
-    setIsLoading(true);
+    setIsLoading(true); // Start loading state
+
     setTimeout(() => {
-      addMessage("ai", answer);
-      setIsLoading(false);
+      addMessage('ai', answer);
+      setIsLoading(false); // End loading state
     }, 300);
 
-    setInput("");
+    setInput('');
   };
 
-  // --- fix New Chat button ---
   const createNewConversation = () => {
     const newConv = {
-      id: Date.now().toString(),
-      title: "New Conversation",
+      id: `conv-${Date.now()}`,
+      title: 'New conversation',
       createdAt: new Date().toISOString(),
       messages: [],
-      feedback: { thumbsUp: false, thumbsDown: false, rating: 0, comment: "" },
+      feedback: { thumbsUp: false, thumbsDown: false, rating: 0, comment: '' },
     };
     setConversations([newConv, ...conversations]);
     setActiveConv(newConv);
-    saveConversations({ conversations: [newConv, ...conversations], qa });
+  };
+
+  const saveConversation = () => {
+    saveConversations({ conversations, qa });
+    alert('Saved locally');
+  };
+
+  const handleThumbs = (type) => {
+    const updated = {
+      ...activeConv,
+      feedback: {
+        ...activeConv.feedback,
+        thumbsUp: type === 'up',
+        thumbsDown: type === 'down',
+      },
+    };
+    const newConvs = conversations.map((c) =>
+      c.id === updated.id ? updated : c
+    );
+    setConversations(newConvs);
+    setActiveConv(updated);
+  };
+
+  const handleEndConversation = () => {
+    const ratingStr = prompt('Please give a rating (1-5):');
+    const rating = Math.min(5, Math.max(0, Number(ratingStr || 0)));
+    const comment = prompt('Any subjective feedback (optional):') || '';
+    const updated = {
+      ...activeConv,
+      feedback: { ...activeConv.feedback, rating, comment },
+    };
+    const newConvs = conversations.map((c) =>
+      c.id === updated.id ? updated : c
+    );
+    setConversations(newConvs);
+    setActiveConv(updated);
+    saveConversations({ conversations: newConvs, qa });
+  };
+
+  const onSelectConversation = (c) => {
+    setActiveConv(c);
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      {/* Header */}
-      <header className="p-4 bg-white shadow flex justify-between items-center">
-        <h1 className="text-xl font-bold">Bot AI</h1>
-        <nav className="flex gap-4">
-          {/* --- fixed New Chat button --- */}
-          <a
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              createNewConversation();
-            }}
-          >
-            New Chat
-          </a>
-          <a href="/history">Past Conversations</a>
-        </nav>
-      </header>
-
-      {/* Messages */}
-      <main className="flex-1 overflow-y-auto p-4">
-        {activeConv?.messages?.map((msg, i) => (
-          <div
-            key={i}
-            className={`mb-2 ${msg.from === "user" ? "text-right" : "text-left"}`}
-          >
-            <span
-              className={`inline-block px-3 py-2 rounded-lg ${
-                msg.from === "user"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-300"
-              }`}
-            >
-              {msg.text}
-            </span>
+    <div className="main-container">
+      <ConversationList
+        conversations={conversations}
+        onSelect={onSelectConversation}
+      />
+      <div className="chat-area">
+        <header className="chat-header">
+          <h1>Bot AI</h1>
+          <button type="button" onClick={createNewConversation}>
+  New Chat
+</button>
+          <h2>{activeConv?.title || 'Start a conversation'}</h2>
+          <div>
+            <button type="button" onClick={saveConversation}>
+              Save
+            </button>
+            <button onClick={handleEndConversation}>End & Rate</button>
           </div>
-        ))}
-        {isLoading && <span className="text-gray-500">Soul AI is typing...</span>}
-        <div ref={endRef} />
-      </main>
-
-      {/* Input */}
-      <form onSubmit={handleAsk} className="p-4 bg-white border-t flex">
-        <input
-          type="text"
-          placeholder="Message Bot AI..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="flex-1 border rounded px-3 py-2"
-        />
-        <button
-          type="submit"
-          className="ml-2 px-4 py-2 bg-blue-600 text-white rounded"
-        >
-          Send
-        </button>
-      </form>
+        </header>
+        <div className="chat-body">
+          {(activeConv?.messages || []).map((m, i) => (
+            <MessageBubble key={i} msg={m} onThumbs={handleThumbs} />
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+        <form className="chat-form" onSubmit={handleAsk}>
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Message Bot AI..."
+            disabled={isLoading} // Disable input when loading
+          />
+          <button type="submit" disabled={isLoading}>Ask</button>
+        </form>
+        {isLoading && <div className="typing-indicator">AI is typing...</div>}
+      </div>
     </div>
   );
 }
