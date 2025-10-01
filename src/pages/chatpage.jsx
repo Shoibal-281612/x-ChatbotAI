@@ -10,9 +10,10 @@ export default function ChatPage() {
   const stored = loadConversations() || stubs;
   const [conversations, setConversations] = useState(stored.conversations);
   const [qa] = useState(stored.qa || {});
-  const [activeConv, setActiveConv] = useState(conversations[0] || {
+  useState(conversations[0] || {
   id: 'default',
-  title: 'How Can I  Help You Today?',
+  title: 'How Can I Help You Today?',
+  createdAt: new Date().toISOString(),
   messages: [],
   feedback: { thumbsUp: false, thumbsDown: false, rating: 0, comment: '' },
 });
@@ -124,9 +125,10 @@ export default function ChatPage() {
       <div className="chat-area">
         <header className="chat-header">
           <h1>Bot AI</h1>
-          <button type="button" onClick={createNewConversation}>
+          <a href="/" onClick={(e) => { e.preventDefault(); createNewConversation(); }}>
   New Chat
-</button>
+</a>
+
           <h2>{activeConv?.title || 'Start a conversation'}</h2>
           <div>
             <button type="button" onClick={saveConversation}>
